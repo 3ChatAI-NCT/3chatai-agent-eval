@@ -71,7 +71,7 @@ def test_captioned_media_keeps_the_caption() -> None:
 
 
 def test_business_text_preserves_contact_details_and_inline_urls() -> None:
-    text = "我手机 13812346621，邮箱 jane@example.com，链接 https://example.com/order?id=9 请查收"
+    text = "我手机 13800000000，邮箱 jane@example.com，链接 https://example.com/order?id=9 请查收"
     message = {"content": text}
     assert message_text(message) == text
     assert message_content(message, []) == text
@@ -266,7 +266,7 @@ def test_source_to_turn_request_preserves_business_values() -> None:
     from golden_eval.application.turn_projection import build_turn_tasks
     from golden_eval.domain.models import RunIdentity
 
-    text = "13812346621 jane@example.com https://example.com/order?id=9"
+    text = "13800000000 jane@example.com https://example.com/order?id=9"
 
     class ContactTransport(MediaTransport):
         def post(self, url, *, headers, payload):

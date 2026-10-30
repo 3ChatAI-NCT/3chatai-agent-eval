@@ -1,3 +1,13 @@
+# Track project documentation and prompt sources.
+!docs/
+!docs/**
+!/*.md
+!prompts/
+!prompts/**
+!src/atomic_eval/prompts/
+!src/atomic_eval/prompts/**
+# Local and sensitive exclusions below take precedence.
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -151,15 +161,6 @@ output/
 !.env.example
 .codegraph/
 *.sqlite*
-
-# Track project documentation and prompt sources.
-!docs/
-!docs/**
-!/*.md
-!prompts/
-!prompts/**
-!src/atomic_eval/prompts/
-!src/atomic_eval/prompts/**
 
 # Private credentials
 *.pem

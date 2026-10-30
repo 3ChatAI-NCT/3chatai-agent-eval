@@ -343,18 +343,18 @@ def test_tool_labels_resolve_skill_ids_and_descriptions():
         "input": [
             {
                 "role": "system",
-                "content": "可用任务：skill_id：138613503694217217, skill_name：用户问题承接",
+                "content": "可用任务：skill_id：123456789012345678, skill_name：用户问题承接",
             }
         ],
         "tools": [
-            {"name": "138613503694217217", "description": "此任务可以：回复用户的任何问题。"},
-            {"name": "761592ad-a775", "description": "此工具可以配置唤醒闹钟\n参数说明…"},
+            {"name": "123456789012345678", "description": "此任务可以：回复用户的任何问题。"},
+            {"name": "11111111-2222", "description": "此工具可以配置唤醒闹钟\n参数说明…"},
             {"name": "knowledge_knowledgeAll_knowledgeAll", "description": "当提到以下意图…"},
         ],
     }
     labels = tool_labels(request)
-    assert labels["138613503694217217"] == "用户问题承接"  # 提示词里的技能名优先于描述
-    assert labels["761592ad-a775"] == "此工具可以配置唤醒闹钟"
+    assert labels["123456789012345678"] == "用户问题承接"  # 提示词里的技能名优先于描述
+    assert labels["11111111-2222"] == "此工具可以配置唤醒闹钟"
     assert labels["knowledge_knowledgeAll_knowledgeAll"] == "知识库检索 · 全部知识库"
 
 

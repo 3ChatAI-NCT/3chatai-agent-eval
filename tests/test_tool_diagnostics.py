@@ -47,13 +47,13 @@ def _source_message(seq: int, role: SenderRole, content: str, tools: list[str]) 
 def _snapshot() -> CorpusSnapshot:
     messages = [
         _source_message(1, SenderRole.VISITOR, "券怎么验", []),
-        _source_message(2, SenderRole.AI, "请把券码发我", ["小管家-团购验券与进场指引"]),
+        _source_message(2, SenderRole.AI, "请把券码发我", ["Demo-券码核验"]),
         _source_message(3, SenderRole.VISITOR, "现在还能进场吗", []),
         _source_message(
             4,
             SenderRole.AI,
             "可以，帮您登记",
-            ["小管家-团购验券与进场指引", "配置企微标签"],
+            ["Demo-券码核验", "配置企微标签"],
         ),
     ]
     return CorpusSnapshot(
@@ -146,31 +146,31 @@ def test_platform_internal_ids_are_not_passed_off_as_tool_names() -> None:
     """平台只回传内部调用 id 时，6.2 必须标成未解析，而不是拿 UUID 当业务工具名。"""
 
     logs = [
-        {"type": "tool", "name": "b7bf2358-4c35-4b89-9906-41939af44d6f", "message": "b7bf2358"},
-        {"type": "tool", "name": "163040328155766785"},
-        {"type": "task", "name": "小管家-欢迎承接"},
+        {"type": "tool", "name": "11111111-1111-4111-8111-111111111111", "message": "11111111"},
+        {"type": "tool", "name": "123456789012345678"},
+        {"type": "task", "name": "Demo-欢迎问候"},
     ]
 
-    assert tool_names(logs) == ["小管家-欢迎承接", "未解析工具(16304032)", "未解析工具(b7bf2358)"]
+    assert tool_names(logs) == ["Demo-欢迎问候", "未解析工具(11111111)", "未解析工具(12345678)"]
 def test_golden_draft_carries_expected_tools_and_a_publishable_catalog() -> None:
     request, _, _ = build_draft_request(_snapshot(), BuildDraftFromSnapshotRequest())
 
     session = request.sessions[0]
     assert [call.name for call in session.turns[0].expected.tool_calls] == [
-        "小管家-团购验券与进场指引"
+        "Demo-券码核验"
     ]
     assert [call.name for call in session.turns[1].expected.tool_calls] == [
-        "小管家-团购验券与进场指引",
+        "Demo-券码核验",
         "配置企微标签",
     ]
     assert (
-        "【工具】必须观察到调用：小管家-团购验券与进场指引；只判断是否调用。"
+        "【工具】必须观察到调用：Demo-券码核验；只判断是否调用。"
         in session.turns[0].rubric
     )
 
     names = [tool.name for tool in request.shared.context.available_tools]
     # 配置里声明的工具与历史里真实发生的动作合并成可用工具清单，金标工具名才能通过发布校验。
-    assert names == ["配置企微标签", "发送门店地址的具体定位", "小管家-团购验券与进场指引"]
+    assert names == ["配置企微标签", "发送门店地址的具体定位", "Demo-券码核验"]
     assert resolve_available_tools(_snapshot())[0].description.startswith("写入企微标签")
     # 发布时的共享合同校验必须在金标工具名上通过，否则带工具的草案一律发不出去。
     JsonlCorpusStore._validate_shared_contract(request.shared, session)

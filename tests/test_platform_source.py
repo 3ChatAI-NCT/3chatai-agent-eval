@@ -128,7 +128,7 @@ class FakeTransport:
                             "agent 1",
                             1_700_000_200_000,
                             agent_logs=[
-                                {"type": "task", "name": "小管家-欢迎承接", "costTime": 1200},
+                                {"type": "task", "name": "Demo-欢迎问候", "costTime": 1200},
                                 {"type": "agent", "name": "mainagent"},
                                 {"type": "knowledge", "name": None},
                             ],
@@ -511,7 +511,7 @@ def test_online_agent_logs_become_source_tool_calls() -> None:
     history = source.hydrate(candidate)
     ai_message = next(message for message in history.messages if message.role is SenderRole.AI)
 
-    assert [call.name for call in ai_message.tool_calls] == ["小管家-欢迎承接", "平台知识库检索"]
+    assert [call.name for call in ai_message.tool_calls] == ["Demo-欢迎问候", "平台知识库检索"]
     assert ai_message.tool_calls[0].log_type == "task"
 
 
