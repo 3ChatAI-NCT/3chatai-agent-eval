@@ -1,0 +1,15 @@
+.git
+.venv
+.local
+.codegraph
+.pytest_cache
+**/__pycache__
+**/*.pyc
+frontend/node_modules
+frontend/dist
+frontend/tsconfig.tsbuildinfo
+tests
+docs
+*.sqlite*
+.env*
+!.env.example
