@@ -2,7 +2,7 @@
 
 Use GitHub Issues for reproducible bugs and focused proposals. Include the expected behavior, actual behavior, relevant versions, and synthetic evidence. Never attach credentials, customer conversations, private endpoints, database dumps, or real report exports.
 
-Keep each pull request focused on one change. Explain its behavior and validation, add meaningful regression coverage, and run the relevant test, lint, and frontend build commands from the README. Use a dedicated disposable database for integration tests.
+Keep each pull request focused on one change. Explain its behavior and validation, add meaningful regression coverage, and run the relevant test, lint, and frontend build commands in the [development guide](docs/DEVELOPMENT.md). Use a dedicated disposable database for integration tests.
 
 ## Configuration changes
 

@@ -43,6 +43,12 @@ python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 
 ## 接入合同
 
+使用 SLS 或 OSS 前安装可选依赖：
+
+```bash
+python -m pip install -e '.[dev,cloud]'
+```
+
 Judge 与 AI 草稿通过模型网关调用；网关 key 从授权服务按租户查询，没有静态兜底 key。外部候选接口支持平台规定的公网 HTTPS 模型协议，不等同于任意 OpenAI 兼容服务都可直接使用。
 
 空间台账需要名称、源空间 ID、基准空间 ID、状态、环境、源空间 AccessToken、基准空间 AccessToken 等现有字段合同。准确字段名和校验逻辑见 [registry.py](../src/agent_eval/registry.py)。只有通过校验且来源与 EVAL 空间及凭据均独立的登记项才可用。凭据按任务在服务端解析，不复制到公开示例。

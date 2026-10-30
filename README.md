@@ -1,59 +1,60 @@
-# 3Chat Agent Eval
+<p align="center">
+  <img src="frontend/public/favicon.svg" width="64" height="64" alt="3Chat Agent Eval" />
+</p>
 
-**Regression evaluation for customer-facing agents, with frozen inputs, versioned rubrics, and reviewable evidence.**
+<h1 align="center">3Chat Agent Eval</h1>
 
-**English** · [简体中文](README.zh-CN.md)
+<p align="center">Regression evaluation for customer-facing agents.</p>
 
-[Configuration](docs/OPERATIONS.md) · [Evaluation reference](docs/EVALUATION_CONFIG_REFERENCE.md) · [Architecture](docs/ARCHITECTURE.md) · [Issues](https://github.com/3ChatAI-NCT/3chatai-agent-eval/issues) · [Apache-2.0](LICENSE)
+<p align="center">
+  <strong>English</strong> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-3Chat Agent Eval connects sample collection, dataset review, isolated replay, LLM-as-Judge scoring, human review, and evidence export. It helps teams investigate which scenarios improved or regressed after a model, prompt, or agent configuration change.
+<p align="center">
+  <a href="#quick-start">Quick start</a> · <a href="docs/OPERATIONS.md">Configuration</a> · <a href="docs/EVALUATION_CONFIG_REFERENCE.md">Evaluation guide</a> · <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-The platform currently integrates with **3Chat services, a Feishu workspace registry, and Alibaba Cloud SLS**. You can start the API and web interface locally, but live collection and evaluation require those external services and your own credentials. A standalone end-to-end demo is not included. The application UI and detailed reference documents are primarily in Simplified Chinese; the language links above switch the README.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="Apache-2.0 license" /></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.12%E2%80%933.14-3776AB?logo=python&amp;logoColor=white" alt="Python 3.12–3.14" /></a>
+</p>
 
-## Why use it?
+Compare candidate models on captured requests, validate agent behavior against reviewed scenarios, and trace each verdict to its inputs, evaluation criteria, and execution evidence.
 
-- **Compare candidate models on frozen requests.** Replay a captured model call and compare the candidate with its production baseline using two order-swapped blind judgments.
-- **Check agents against reviewed requirements.** Replay individual conversation turns in a separate EVAL workspace and score them against versioned rubrics.
-- **Separate semantic judgment from deterministic rules.** Models assess meaning; code handles applicability, schema checks, counting, aggregation, and `pass^k`.
-- **Trace a conclusion to its evidence.** Preserve dataset hashes, execution settings, judge prompts and models, available call traces, and append-only human reviews.
-- **Export evidence for further analysis.** Download JSON/JSONL evidence bundles with integrity hashes and explicit records of missing evidence.
+## What you can evaluate
 
-## Evaluation modes
-
-| | Call Replay | Turn Replay |
+| Mode | Use it to answer | How it works |
 | --- | --- | --- |
-| Question | Does a candidate model improve this captured request? | Does the current EVAL agent meet reviewed requirements for this turn? |
-| Input | Frozen model request and production reference output | Conversation history, current input, reference behavior, profile, and per-turn rubric |
-| Execution | Replace only the request's `model`; reject unsupported state-dependent requests | Create a test contact for each turn, seed and verify its prior profile, then send the current input |
-| Judgment | Candidate better, tie, baseline better, judge disagreement, or insufficient evidence | Semantic metrics plus deterministic checks, aggregated by turn and session |
-| Boundary | A requested tool call does not prove that a tool ran | Independent turn replay does not establish success in a continuous user journey |
+| **Call Replay** | Does a candidate model improve the same request? | Replay a frozen model call and compare its output with the production baseline through two order-swapped blind judgments. |
+| **Turn Replay** | Does the EVAL agent meet the requirements for this turn? | Create a test contact, seed its prior profile, and replay the turn against a reviewed rubric. |
 
-The platform does **not** snapshot the complete agent configuration, copy production workspaces, or deploy agents. Turn Replay evaluates the EVAL workspace configuration present at execution time. Execution failures and missing evidence remain visible; they do not count as successful business outcomes. Tool traces are currently diagnostic evidence rather than a component of the Turn Replay pass decision.
+- **Version your benchmarks.** Review reference drafts and publish immutable dataset versions. Corrections create a new version.
+- **Inspect the evidence.** Follow dataset hashes, frozen judge settings, per-turn observations, and available model-call traces.
+- **Keep human review auditable.** Record human conclusions separately from the original judge results, with revision history.
+- **Take results with you.** Export JSON/JSONL evidence bundles with integrity hashes and missing-evidence records.
+
+![3Chat Agent Eval workbench overview](docs/assets/workbench.jpg)
+
+*Workbench overview. The application UI is currently in Simplified Chinese.*
 
 ## Workflow
 
 ```mermaid
 flowchart LR
-    A[Register source and EVAL workspaces] --> B[Collect read-only samples]
-    B --> C[Review and publish dataset]
-    C --> D[Freeze evaluation settings]
-    D --> E[Replay and judge]
-    E --> F[Inspect evidence and human review]
-    F -. Revise reference .-> C
+    A[Collect samples] --> B[Review and publish]
+    B --> C[Replay]
+    C --> D[Judge]
+    D --> E[Inspect and review]
+    E -. Refine reference .-> B
 ```
 
-Published dataset versions are immutable. Reference corrections produce new versions; human reviews are recorded separately from the original judge results. Run manifests freeze evaluation inputs and scoring settings, while the complete external agent configuration remains outside that snapshot.
+Turn Replay evaluates independent turns against the EVAL workspace configuration present at execution time. See the [evaluation guide](docs/EVALUATION_CONFIG_REFERENCE.md) for scoring and the [architecture](docs/ARCHITECTURE.md) for execution scope and data handling.
 
-## Local quick start
+## Quick start
 
-### Prerequisites
+**Requirements:** Python 3.12–3.14, Node.js 20.19+ or 22.12+, npm, and a running PostgreSQL server.
 
-- Python **3.12–3.14**.
-- Node.js **20.19+ or 22.12+**, and npm, as required by Vite 7.
-- A running PostgreSQL server and permission to create a local database. SQLite is not supported.
-- Git. No cloud credentials are needed to start the empty local API and UI.
-
-### 1. Install the backend
+### 1. Install
 
 ```bash
 git clone https://github.com/3ChatAI-NCT/3chatai-agent-eval.git
@@ -63,122 +64,65 @@ source .venv/bin/activate
 python -m pip install -e '.[dev]'
 cp .env.example .env
 createdb agent_eval_dev
+npm --prefix frontend ci --ignore-scripts
 ```
 
-Use any supported Python interpreter in place of `python3.12`. Run the commands from the repository root. If `.env` already exists, merge the example settings into it instead of overwriting it. Adjust `EVAL_DATABASE_URL` for your local PostgreSQL user, host, and database. All service addresses and credentials in `.env.example` are empty. Set `EVAL_DATABASE_URL` to your own connection string before starting; a local-only example is `postgresql://localhost/agent_eval_dev`. Local object storage uses `.local/objects`.
+### 2. Configure
 
-Minimum local configuration:
+Set `EVAL_DATABASE_URL` in `.env` to your PostgreSQL connection string. The template already selects development mode and local storage; service addresses and credentials are left empty. The full variable reference is in [configuration](docs/OPERATIONS.md).
 
-| Variable | Local setup |
-| --- | --- |
-| `EVAL_DATABASE_URL` | Required; enter your own PostgreSQL connection string |
-| `EVAL_ENVIRONMENT` | `development` |
-| `EVAL_DEV_IDENTITY` | `true`, for loopback-only development |
-| `EVAL_STORAGE_BACKEND` | `local` |
+Development mode uses a local identity. Keep the API and web server bound to loopback.
 
-The complete variable template is [`.env.example`](.env.example). Required conditions, value formats, and production requirements are documented in [configuration](docs/OPERATIONS.md).
+### 3. Start
 
-The example enables `EVAL_DEV_IDENTITY=true`, which bypasses authentication for local development. Keep the API and UI bound to loopback. Production requires gateway authentication, an authorized tenant and member list, a HTTPS public origin, and OSS storage.
-
-### 2. Start the API and worker
+Run the following from the repository root in three terminals:
 
 ```bash
-# Terminal 1, with the virtual environment activated
+# Terminal 1 — API
+source .venv/bin/activate
 agent-eval api
 ```
 
 ```bash
-# Terminal 2, from the repository root
+# Terminal 2 — worker
 source .venv/bin/activate
 agent-eval worker
 ```
 
-Both processes apply Alembic migrations automatically at startup. The worker is required to process queued collection, replay, scoring, and report jobs.
-
-Check [API readiness](http://127.0.0.1:8080/health/ready). In development mode, the API schema is available at [Swagger UI](http://127.0.0.1:8080/docs).
-
-### 3. Start the web interface
-
 ```bash
-# Terminal 3
-npm --prefix frontend ci --ignore-scripts
+# Terminal 3 — web
 npm --prefix frontend run dev
 ```
 
-Open [http://127.0.0.1:5173/agent-eval/](http://127.0.0.1:5173/agent-eval/). Vite proxies `/api/agent-eval` to the local API. A fresh database has no workspaces or datasets; this verifies local startup, not a live evaluation.
+Open the [workbench](http://127.0.0.1:5173/agent-eval/). The API applies database migrations at startup; check [readiness](http://127.0.0.1:8080/health/ready) or explore the development [API docs](http://127.0.0.1:8080/docs).
 
-## Connect a live installation
+Local startup gives you the UI and API with an empty database. Live collection and evaluation use 3Chat services, a Feishu workspace registry, and SLS. Follow the [integration setup](docs/OPERATIONS.md) to connect your own installation.
 
-| Capability | Required integration |
+## Your first evaluation
+
+Once the integrations are configured:
+
+1. **Register workspaces.** Synchronize the registry and confirm that the source and isolated EVAL workspace pair is active.
+2. **Prepare a dataset.** Collect frozen requests for Call Replay, or review conversation references and rubrics for Turn Replay before publishing a dataset version.
+3. **Run an evaluation.** Choose a dataset, repeat count, judge configuration, and candidate model or EVAL target. The worker processes queued jobs.
+4. **Review the result.** Check execution coverage and per-item evidence, record human review, and export an evidence bundle when the run is complete and blind identities are revealed.
+
+## Documentation
+
+| Guide | Contents |
 | --- | --- |
-| Workspace registration and access-token resolution | Feishu app and Base registry, with distinct source and EVAL workspaces |
-| Request collection and model-call traces | Alibaba Cloud SLS and read-only log-query credentials |
-| Judge scoring and AI-assisted rubric drafting | 3Chat model gateway, entitlement service, tenant, and configured model |
-| Conversation collection and Turn Replay | 3Chat platform APIs and an isolated EVAL workspace; model-mapping service for execution-model selection |
-| Candidate model calls | A supported public HTTPS model endpoint, model name, and API key |
-| Production artifact storage | Private Alibaba Cloud OSS bucket and scoped credentials |
+| [Configuration and integrations](docs/OPERATIONS.md) | Environment variables, credentials, external services, and deployment requirements |
+| [Evaluation reference](docs/EVALUATION_CONFIG_REFERENCE.md) | Metrics, applicability, scoring, and result interpretation |
+| [Architecture](docs/ARCHITECTURE.md) | Components, execution boundaries, evidence, and data handling |
+| [Development](docs/DEVELOPMENT.md) | Tests, database setup, lint, build, and project layout |
+| [Terminology](CONTEXT.md) · [Prompts](docs/PROMPTS.md) | Domain concepts and versioned evaluation prompts |
 
-Install `python -m pip install -e '.[dev,cloud]'` when using the SLS or OSS integrations. Configure the relevant `EVAL_*`, `SLS_*`, and `ALIBABA_CLOUD_*` variables for your own installation. Gateway, entitlement, mapping, platform, and storage addresses have no preset values; configure them explicitly. Review [settings](src/agent_eval/config.py) and the [deployment reference](docs/OPERATIONS.md) before adapting an installation; production deployment files are not bundled, and all service addresses and secrets belong to your installation.
+Detailed configuration and evaluation references are currently in Chinese.
 
-Candidate API keys also require `EVAL_CREDENTIAL_KEY`, a server-side Fernet key. Generate one with `python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'`, store it in your local `.env` or deployment secret store, and keep it out of source control.
+## Contributing
 
-For an installation with those integrations configured:
-
-1. Synchronize the workspace registry and verify the source/EVAL pair is active.
-2. Collect Call Replay samples or conversation drafts for Turn Replay.
-3. For Turn Replay, review the reference behavior, profile expectations, and rubric before publishing a dataset version. AI-generated drafts require human review.
-4. Create an evaluation with a dataset, repeat count, judge settings, and candidate model or EVAL execution target.
-5. Run the worker; inspect execution coverage, scoring failures, per-item evidence, and human reviews before interpreting aggregate scores.
-6. Export the complete evidence bundle after the run ends and any blind identities are revealed.
-
-Image previews require an explicit `EVAL_MEDIA_ALLOWED_HOSTS` allowlist of exact trusted hostnames. It is empty by default, so unconfigured previews cannot make outbound requests.
-
-## Data handling
-
-Credential filtering is **not personal-data anonymization**. Collected samples, authenticated reports, and exported evidence can retain original business text, phone numbers, email addresses, and image URLs. Restrict access and use synthetic data in public issues, screenshots, fixtures, and examples. Older frozen data may retain earlier masking; upgrades do not reconstruct or rewrite it.
-
-Keep source access read-only and route replay execution to separate test workspaces with test contacts and safe external dependencies. The platform does not provision that isolation for you. Never commit `.env` files, credentials, collected conversations, object storage contents, or report exports.
-
-## Development
-
-```bash
-# Unit tests; PostgreSQL integration tests are excluded
-python -m pytest -m 'not postgres' --ignore=tests/test_startup_migration.py
-
-# Python lint and frontend production build
-ruff check src tests migrations
-npm --prefix frontend run build
-```
-
-For the full suite, use a **dedicated disposable PostgreSQL database**. The migration tests also require permission to create and drop temporary databases. Do not point these commands at production or at a database containing useful data.
-
-```bash
-createdb agent_eval_test
-export TEST_DATABASE_URL=postgresql://localhost/agent_eval_test
-EVAL_DATABASE_URL="$TEST_DATABASE_URL" python -m alembic upgrade head
-python -m pytest
-```
-
-Tests use synthetic fixtures and mocked external services. Passing them does not establish that live credentials, integrations, or customer scenarios work.
-
-## Project layout and documentation
-
-| Path | Purpose |
-| --- | --- |
-| [`frontend/`](frontend/) | React, TypeScript, Vite, and HeroUI workbench |
-| [`src/agent_eval/`](src/agent_eval/) | FastAPI, PostgreSQL job queue, workers, registry, and reports |
-| [`src/atomic_eval/`](src/atomic_eval/) | Call Replay constraints, pairwise judging, and aggregation |
-| [`src/golden_eval/`](src/golden_eval/) | Turn Replay contracts, execution, profiles, and scoring |
-| [`prompts/`](prompts/) | Versioned judge and annotation prompts |
-| [`migrations/`](migrations/) | Alembic schema migrations |
-| [`tests/`](tests/) | Unit and PostgreSQL integration tests |
-
-Detailed references are currently in Chinese: [evaluation metrics](docs/EVALUATION_CONFIG_REFERENCE.md), [architecture](docs/ARCHITECTURE.md), [terminology](CONTEXT.md), and [operations](docs/OPERATIONS.md).
-
-## Contributing and support
-
-See [contribution guidelines](CONTRIBUTING.md) for the change and configuration workflow. Use [GitHub Issues](https://github.com/3ChatAI-NCT/3chatai-agent-eval/issues) for bugs and proposals, and [pull requests](https://github.com/3ChatAI-NCT/3chatai-agent-eval/pulls) for focused changes. Include reproduction steps, expected and actual behavior, relevant versions, and synthetic or redacted evidence. Add regression coverage for behavior changes, run the relevant checks, and keep both README versions synchronized. Do not post credentials or customer data in public reports.
+Bug reports, proposals, and focused pull requests are welcome. Start with the [contribution guide](CONTRIBUTING.md), or open an [issue](https://github.com/3ChatAI-NCT/3chatai-agent-eval/issues). Keep both README versions synchronized and use synthetic data in public examples.
 
 ## License
 
-[Apache License 2.0](LICENSE), matching the existing public repository. External services and datasets are not bundled; their access and usage terms apply separately.
+[Apache License 2.0](LICENSE).
